@@ -1,6 +1,6 @@
 {
   "name": "photosync-client",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "PhotoSync 前端应用",
   "private": true,
   "dependencies": {

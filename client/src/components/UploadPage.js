@@ -1,19 +1,19 @@
-import React, { useState, useCallback, useEffect } from 'react';
+/* eslint-disable react/no-unknown-property */
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { usePhotos } from '../context/PhotoContext';
-import { Upload, X, CheckCircle, AlertCircle, Camera, Folder } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Camera, Folder } from 'lucide-react';
 
 function UploadPage({ showToast }) {
   const { uploadPhotos } = usePhotos();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({});
   const [uploadStats, setUploadStats] = useState({
     totalFiles: 0,
     uploadedFiles: 0,
     totalSize: 0,
     uploadedSize: 0,
-    speed: 0
+    speed: 0,
   });
   const [isMobile, setIsMobile] = useState(false);
 
@@ -38,7 +38,7 @@ function UploadPage({ showToast }) {
       file,
       status: 'pending', // pending, uploading, success, error
       progress: 0,
-      error: null
+      error: null,
     }));
     
     setFiles(prev => [...prev, ...newFiles]);
@@ -48,18 +48,18 @@ function UploadPage({ showToast }) {
     setUploadStats(prev => ({
       ...prev,
       totalFiles: files.length + newFiles.length,
-      totalSize
+      totalSize,
     }));
   }, [files]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif']
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif'],
     },
     multiple: true,
     maxSize: 10 * 1024 * 1024, // 10MB
-    disabled: uploading
+    disabled: uploading,
   });
 
   // 处理文件夹上传
@@ -93,7 +93,7 @@ function UploadPage({ showToast }) {
       file,
       status: 'pending',
       progress: 0,
-      error: null
+      error: null,
     }));
 
     setFiles(prev => [...prev, ...newFiles]);
@@ -103,7 +103,7 @@ function UploadPage({ showToast }) {
     setUploadStats(prev => ({
       ...prev,
       totalFiles: files.length + newFiles.length,
-      totalSize
+      totalSize,
     }));
 
     showToast(`从文件夹中选择了 ${validFiles.length} 张图片`, 'success');
@@ -117,7 +117,7 @@ function UploadPage({ showToast }) {
       setUploadStats(prevStats => ({
         ...prevStats,
         totalFiles: newFiles.length,
-        totalSize
+        totalSize,
       }));
       return newFiles;
     });
@@ -144,7 +144,7 @@ function UploadPage({ showToast }) {
       ...prev,
       uploadedFiles: 0,
       uploadedSize: 0,
-      speed: 0
+      speed: 0,
     }));
 
     try {
@@ -160,19 +160,19 @@ function UploadPage({ showToast }) {
         setUploadStats(prev => ({
           ...prev,
           uploadedSize,
-          speed: speed / (1024 * 1024) // MB/s
+          speed: speed / (1024 * 1024), // MB/s
         }));
         
         // 更新单个文件进度
-        setUploadProgress(prev => ({
-          ...prev,
-          [progress.loaded]: progress.percent
-        }));
+        setFiles(prev => prev.map(fileItem => ({
+          ...fileItem,
+          progress: progress.percent,
+          status: 'uploading',
+        })));
       });
 
       showToast(`成功上传 ${result.photos.length} 张照片`, 'success');
       setFiles([]);
-      setUploadProgress({});
       
     } catch (error) {
       showToast('上传失败: ' + error.message, 'error');
@@ -184,13 +184,12 @@ function UploadPage({ showToast }) {
   // 清空所有文件
   const clearAllFiles = () => {
     setFiles([]);
-    setUploadProgress({});
     setUploadStats({
       totalFiles: 0,
       uploadedFiles: 0,
       totalSize: 0,
       uploadedSize: 0,
-      speed: 0
+      speed: 0,
     });
   };
 
@@ -338,7 +337,7 @@ function UploadPage({ showToast }) {
                   style={{
                     width: uploadStats.totalSize > 0 
                       ? `${(uploadStats.uploadedSize / uploadStats.totalSize) * 100}%`
-                      : '0%'
+                      : '0%',
                   }}
                 />
               </div>

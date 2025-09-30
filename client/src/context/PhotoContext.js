@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import { photoAPI } from '../services/api';
 
 const PhotoContext = createContext();
@@ -12,72 +12,72 @@ const initialState = {
     page: 1,
     limit: 20,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   },
   filters: {
     startDate: '',
     endDate: '',
     orderBy: 'upload_date',
-    order: 'DESC'
-  }
+    order: 'DESC',
+  },
 };
 
 // Reducer
 function photoReducer(state, action) {
   switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
+  case 'SET_LOADING':
+    return { ...state, loading: action.payload };
     
-    case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
+  case 'SET_ERROR':
+    return { ...state, error: action.payload, loading: false };
     
-    case 'SET_PHOTOS':
-      return {
-        ...state,
-        photos: action.payload.photos,
-        pagination: action.payload.pagination,
-        loading: false,
-        error: null
-      };
+  case 'SET_PHOTOS':
+    return {
+      ...state,
+      photos: action.payload.photos,
+      pagination: action.payload.pagination,
+      loading: false,
+      error: null,
+    };
     
-    case 'ADD_PHOTOS':
-      return {
-        ...state,
-        photos: [...action.payload, ...state.photos],
-        pagination: {
-          ...state.pagination,
-          total: state.pagination.total + action.payload.length
-        }
-      };
+  case 'ADD_PHOTOS':
+    return {
+      ...state,
+      photos: [...action.payload, ...state.photos],
+      pagination: {
+        ...state.pagination,
+        total: state.pagination.total + action.payload.length,
+      },
+    };
     
-    case 'REMOVE_PHOTO':
-      return {
-        ...state,
-        photos: state.photos.filter(photo => photo.id !== action.payload),
-        pagination: {
-          ...state.pagination,
-          total: Math.max(0, state.pagination.total - 1)
-        }
-      };
+  case 'REMOVE_PHOTO':
+    return {
+      ...state,
+      photos: state.photos.filter(photo => photo.id !== action.payload),
+      pagination: {
+        ...state.pagination,
+        total: Math.max(0, state.pagination.total - 1),
+      },
+    };
     
-    case 'SET_FILTERS':
-      return {
-        ...state,
-        filters: { ...state.filters, ...action.payload },
-        pagination: { ...state.pagination, page: 1 }
-      };
+  case 'SET_FILTERS':
+    return {
+      ...state,
+      filters: { ...state.filters, ...action.payload },
+      pagination: { ...state.pagination, page: 1 },
+    };
     
-    case 'SET_PAGE':
-      return {
-        ...state,
-        pagination: { ...state.pagination, page: action.payload }
-      };
+  case 'SET_PAGE':
+    return {
+      ...state,
+      pagination: { ...state.pagination, page: action.payload },
+    };
     
-    case 'CLEAR_ERROR':
-      return { ...state, error: null };
+  case 'CLEAR_ERROR':
+    return { ...state, error: null };
     
-    default:
-      return state;
+  default:
+    return state;
   }
 }
 
@@ -95,7 +95,7 @@ export function PhotoProvider({ children }) {
       const response = await photoAPI.getPhotos({
         page,
         limit: state.pagination.limit,
-        ...state.filters
+        ...state.filters,
       });
       
       if (append) {
@@ -164,7 +164,7 @@ export function PhotoProvider({ children }) {
     deletePhoto,
     setFilters,
     setPage,
-    clearError
+    clearError,
   };
 
   return (

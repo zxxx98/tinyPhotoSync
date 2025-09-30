@@ -17,7 +17,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器
@@ -37,7 +37,7 @@ api.interceptors.response.use(
       // 其他错误
       throw new Error(error.message || '未知错误');
     }
-  }
+  },
 );
 
 // 照片相关API
@@ -70,7 +70,7 @@ export const photoAPI = {
       onUploadProgress: (progressEvent) => {
         if (onProgress) {
           const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
+            (progressEvent.loaded * 100) / progressEvent.total,
           );
           
           // 计算上传速度
@@ -81,7 +81,7 @@ export const photoAPI = {
             percent: percentCompleted,
             loaded: progressEvent.loaded,
             total: progressEvent.total,
-            speed: speedMBps
+            speed: speedMBps,
           });
         }
       },

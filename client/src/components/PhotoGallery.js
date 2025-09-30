@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePhotos } from '../context/PhotoContext';
-import { Calendar, Filter, Search, Trash2, Eye, Camera } from 'lucide-react';
+import {  Filter, Trash2, Eye, Camera } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 
 function PhotoGallery({ showToast }) {
@@ -15,7 +18,7 @@ function PhotoGallery({ showToast }) {
     deletePhoto,
     setFilters,
     setPage,
-    clearError
+    clearError,
   } = usePhotos();
 
   const [showFilters, setShowFilters] = useState(false);

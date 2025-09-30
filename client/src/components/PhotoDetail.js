@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Download, Calendar, Camera, FileText } from 'lucide-react';
 import { photoAPI } from '../services/api';
@@ -61,7 +62,7 @@ function PhotoDetail({ showToast }) {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 

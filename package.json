@@ -1,6 +1,6 @@
 {
   "name": "photosync",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "PhotoSync - 自托管的照片同步应用",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
@@ -13,7 +13,8 @@
     "docker:down": "docker-compose down",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up",
     "docker:logs": "docker-compose logs -f",
-    "docker:clean": "docker-compose down -v && docker system prune -f"
+    "docker:clean": "docker-compose down -v && docker system prune -f",
+    "version": "node scripts/update-version.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

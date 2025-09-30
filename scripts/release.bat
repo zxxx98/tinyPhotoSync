@@ -2,18 +2,24 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-REM PhotoSync 发布脚本 (Windows版本)
-REM 使用方法: scripts\release.bat [版本号] [选项]
-REM 例如: scripts\release.bat 1.0.0 --dry-run
+REM PhotoSync Release Script (Windows Version)
+REM Usage: scripts\release.bat [options]
+REM Example: scripts\release.bat --dry-run
+REM Note: Version should be updated separately using npm run version
+
+REM Ensure we're in the project root directory
+cd /d "%~dp0.."
+
+REM Debug: Show current directory
+echo Current working directory: %CD%
 
 set "DRY_RUN=false"
 set "PUSH_TAG=true"
 set "UPDATE_CHANGELOG=true"
-set "VERSION="
 
-REM 解析参数
+REM Parse arguments
 :parse_args
-if "%~1"=="" goto :check_version
+if "%~1"=="" goto :check_prerequisites
 if "%~1"=="--dry-run" (
     set "DRY_RUN=true"
     shift
@@ -31,127 +37,113 @@ if "%~1"=="--no-changelog" (
 )
 if "%~1"=="-h" goto :help
 if "%~1"=="--help" goto :help
-if "%VERSION%"=="" (
-    set "VERSION=%~1"
-    shift
-    goto :parse_args
-)
-echo 错误: 未知参数 %~1
+echo Error: Unknown parameter %~1
+pause
 exit /b 1
 
 :help
-echo PhotoSync 发布脚本 (Windows版本)
+echo PhotoSync Release Script (Windows Version)
 echo.
-echo 使用方法: %~nx0 [版本号] [选项]
+echo Usage: %~nx0 [options]
 echo.
-echo 参数:
-echo   版本号              要发布的版本号 (例如: 1.0.0)
+echo Options:
+echo   --dry-run            Show operations to be performed without executing
+echo   --no-push            Do not push tags to remote repository
+echo   --no-changelog       Do not update CHANGELOG.md
+echo   -h, --help           Show this help information
 echo.
-echo 选项:
-echo   --dry-run          只显示将要执行的操作，不实际执行
-echo   --no-push          不推送标签到远程仓库
-echo   --no-changelog     不更新 CHANGELOG.md
-echo   -h, --help         显示此帮助信息
+echo Examples:
+echo   %~nx0                    # Create release tag and push
+echo   %~nx0 --dry-run          # Preview release operations
+echo   %~nx0 --no-push          # Create local tags only
 echo.
-echo 示例:
-echo   %~nx0 1.0.0                    # 发布版本 1.0.0
-echo   %~nx0 1.0.0 --dry-run          # 预览发布操作
-echo   %~nx0 1.0.0 --no-push          # 只创建本地标签
+echo Note: Version should be updated separately using npm run version
+pause
 exit /b 0
 
-:check_version
+:check_prerequisites
+REM Get current version from package.json
+for /f "tokens=2 delims=:" %%a in ('findstr /r "\"version\"" package.json') do (
+    set "VERSION=%%a"
+    set "VERSION=!VERSION: =!"
+    set "VERSION=!VERSION:"=!"
+    set "VERSION=!VERSION:,=!"
+)
 if "%VERSION%"=="" (
-    echo 错误: 请提供版本号
-    echo 使用方法: %~nx0 [版本号] [选项]
-    echo 使用 %~nx0 --help 查看详细帮助
+    echo Error: Could not read version from package.json
+    pause
     exit /b 1
 )
 
-REM 检查工作目录是否干净
+REM Check if working directory is clean
+echo Checking working directory status...
 git status --porcelain >nul 2>&1
 if %errorlevel% neq 0 (
-    echo 错误: 工作目录不干净，请先提交或暂存所有更改
+    echo Error: Working directory is not clean, please commit or stash all changes
     git status --short
+    pause
     exit /b 1
 )
 
-REM 检查是否在正确的分支
-for /f "tokens=*" %%i in ('git branch --show-current') do set "CURRENT_BRANCH=%%i"
-if not "%CURRENT_BRANCH%"=="main" if not "%CURRENT_BRANCH%"=="master" (
-    echo 警告: 当前不在主分支 (main/master)，当前分支: %CURRENT_BRANCH%
-    set /p "continue=是否继续? (y/N): "
-    if /i not "!continue!"=="y" exit /b 1
-)
-
-REM 检查标签是否已存在
+REM Check if tag already exists
+echo Checking if tag already exists...
 git tag -l | findstr /x "v%VERSION%" >nul
 if %errorlevel% equ 0 (
-    echo 错误: 标签 v%VERSION% 已存在
+    echo Error: Tag v%VERSION% already exists
+    pause
     exit /b 1
 )
 
-echo 🚀 PhotoSync 发布流程
-echo ====================
-echo 版本号: v%VERSION%
-echo 当前分支: %CURRENT_BRANCH%
-echo 干运行: %DRY_RUN%
-echo 推送标签: %PUSH_TAG%
-echo 更新变更日志: %UPDATE_CHANGELOG%
+echo PhotoSync Release Process
+echo =========================
+echo Version: v%VERSION%
+echo Current branch: Check manually, default is main
+echo Dry run: %DRY_RUN%
+echo Push tags: %PUSH_TAG%
+echo Update changelog: %UPDATE_CHANGELOG%
 echo.
 
-REM 更新 package.json 版本
-echo 📦 更新 package.json 版本...
-if "%DRY_RUN%"=="true" (
-    echo   [DRY RUN] 将更新根目录 package.json 版本为 %VERSION%
-    echo   [DRY RUN] 将更新 client\package.json 版本为 %VERSION%
-    echo   [DRY RUN] 将更新 server\package.json 版本为 %VERSION%
-) else (
-    npm version %VERSION% --no-git-tag-version
-    cd client && npm version %VERSION% --no-git-tag-version && cd ..
-    cd server && npm version %VERSION% --no-git-tag-version && cd ..
-)
-
-REM 更新 CHANGELOG.md
+REM Update CHANGELOG.md
 if "%UPDATE_CHANGELOG%"=="true" (
-    echo 📝 更新 CHANGELOG.md...
+    echo Updating CHANGELOG.md...
     if "%DRY_RUN%"=="true" (
-        echo   [DRY RUN] 将在 CHANGELOG.md 顶部添加版本 %VERSION% 的条目
+        echo   [DRY RUN] Will add version %VERSION% entry to top of CHANGELOG.md
     ) else (
-        REM 创建 CHANGELOG.md 如果不存在
+        REM Create CHANGELOG.md if it doesn't exist
         if not exist "CHANGELOG.md" (
             (
-                echo # 变更日志
+                echo # Changelog
                 echo.
-                echo 所有重要的项目更改都将记录在此文件中。
+                echo All notable changes to this project will be documented in this file.
                 echo.
-                echo 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
-                echo 并且此项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+                echo The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+                echo and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
                 echo.
-                echo ## [未发布]
+                echo ## [Unreleased]
                 echo.
-                echo ### 新增
-                echo - 初始版本
+                echo ### Added
+                echo - Initial version
                 echo.
             ) > CHANGELOG.md
         )
         
-        REM 获取当前日期
+        REM Get current date
         for /f "tokens=1-3 delims=/" %%a in ('date /t') do set "DATE=%%c-%%a-%%b"
         
-        REM 创建临时文件
+        REM Create temporary file
         echo ## [%VERSION%] - %DATE% > temp_changelog.txt
         echo. >> temp_changelog.txt
-        echo ### 新增 >> temp_changelog.txt
-        echo - 请在此处添加新功能 >> temp_changelog.txt
+        echo ### Added >> temp_changelog.txt
+        echo - Please add new features here >> temp_changelog.txt
         echo. >> temp_changelog.txt
-        echo ### 更改 >> temp_changelog.txt
-        echo - 请在此处添加更改 >> temp_changelog.txt
+        echo ### Changed >> temp_changelog.txt
+        echo - Please add changes here >> temp_changelog.txt
         echo. >> temp_changelog.txt
-        echo ### 修复 >> temp_changelog.txt
-        echo - 请在此处添加修复 >> temp_changelog.txt
+        echo ### Fixed >> temp_changelog.txt
+        echo - Please add fixes here >> temp_changelog.txt
         echo. >> temp_changelog.txt
         
-        REM 合并到 CHANGELOG.md
+        REM Merge into CHANGELOG.md
         type temp_changelog.txt > temp_combined.txt
         type CHANGELOG.md >> temp_combined.txt
         move temp_combined.txt CHANGELOG.md
@@ -159,29 +151,28 @@ if "%UPDATE_CHANGELOG%"=="true" (
     )
 )
 
-REM 提交更改
-echo 💾 提交更改...
+REM Commit changes
+echo Committing changes...
 if "%DRY_RUN%"=="true" (
-    echo   [DRY RUN] 将提交 package.json 和 CHANGELOG.md 的更改
+    echo   [DRY RUN] Will commit CHANGELOG.md changes
 ) else (
-    git add package.json client\package.json server\package.json
     if "%UPDATE_CHANGELOG%"=="true" git add CHANGELOG.md
     git commit -m "chore: prepare release v%VERSION%"
 )
 
-REM 创建标签
-echo 🏷️  创建标签...
+REM Create tag
+echo Creating tag...
 if "%DRY_RUN%"=="true" (
-    echo   [DRY RUN] 将创建标签 v%VERSION%
+    echo   [DRY RUN] Will create tag v%VERSION%
 ) else (
     git tag -a "v%VERSION%" -m "Release v%VERSION%"
 )
 
-REM 推送更改和标签
+REM Push changes and tags
 if "%PUSH_TAG%"=="true" (
-    echo 📤 推送更改和标签...
+    echo Pushing changes and tags...
     if "%DRY_RUN%"=="true" (
-        echo   [DRY RUN] 将推送提交和标签到远程仓库
+        echo   [DRY RUN] Will push commits and tags to remote repository
     ) else (
         git push origin %CURRENT_BRANCH%
         git push origin v%VERSION%
@@ -189,22 +180,28 @@ if "%PUSH_TAG%"=="true" (
 )
 
 echo.
-echo ✅ 发布流程完成！
+echo Release process completed!
 echo.
-echo 下一步:
-echo 1. GitHub Actions 将自动构建 Docker 镜像
-echo 2. 镜像将推送到: ghcr.io/用户名/photosync:v%VERSION%
-echo 3. 将自动创建 GitHub Release
+echo Next steps:
+echo 1. GitHub Actions will automatically build Docker images
+echo 2. Images will be pushed to: ghcr.io/username/photosync:v%VERSION%
+echo 3. GitHub Release will be automatically created
 echo.
-echo 手动操作 (如果需要):
-echo - 编辑 CHANGELOG.md 添加详细的变更内容
-echo - 检查 GitHub Release 页面并完善发布说明
-echo - 通知团队成员新版本已发布
+echo Manual operations (if needed):
+echo - Edit CHANGELOG.md to add detailed change descriptions
+echo - Check GitHub Release page and improve release notes
+echo - Notify team members about the new release
+echo.
+echo Note: To update version numbers, use: npm run version [new-version]
 
 if "%DRY_RUN%"=="true" (
     echo.
-    echo 💡 这是干运行模式，没有实际执行任何操作
-    echo 要实际执行发布，请运行: %~nx0 %VERSION%
+    echo This is dry run mode, no actual operations were performed
+    echo To actually execute the release, run: %~nx0
 )
+
+echo.
+echo Press any key to exit...
+pause >nul
 
 endlocal

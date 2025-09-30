@@ -105,9 +105,9 @@ if "%DRY_RUN%"=="true" (
     echo   [DRY RUN] 将更新 client\package.json 版本为 %VERSION%
     echo   [DRY RUN] 将更新 server\package.json 版本为 %VERSION%
 ) else (
-    npm version %VERSION% --no-git-tag-version
-    cd client && npm version %VERSION% --no-git-tag-version && cd ..
-    cd server && npm version %VERSION% --no-git-tag-version && cd ..
+    pnpm version %VERSION% --no-git-tag-version
+    cd client && pnpm version %VERSION% --no-git-tag-version && cd ..
+    cd server && pnpm version %VERSION% --no-git-tag-version && cd ..
 )
 
 REM 更新 CHANGELOG.md

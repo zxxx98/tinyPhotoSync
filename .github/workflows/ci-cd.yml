@@ -24,38 +24,43 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Install dependencies
         run: |
-          npm ci
-          cd client && npm ci
-          cd ../server && npm ci
+          pnpm install
+          cd client && pnpm install
+          cd ../server && pnpm install
 
       - name: Run linting
         run: |
           # 客户端代码检查
           cd client
-          npm run lint || echo "Linting not configured"
+          pnpm run lint || echo "Linting not configured"
           
           # 服务端代码检查
           cd ../server
-          npm run lint || echo "Linting not configured"
+          pnpm run lint || echo "Linting not configured"
 
       - name: Run tests
         run: |
           # 客户端测试
           cd client
-          npm test -- --coverage --watchAll=false || echo "Tests not configured"
+          pnpm test -- --coverage --watchAll=false || echo "Tests not configured"
           
           # 服务端测试
           cd ../server
-          npm test -- --coverage || echo "Tests not configured"
+          pnpm test -- --coverage || echo "Tests not configured"
 
       - name: Build client
         run: |
           cd client
-          npm run build
+          pnpm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

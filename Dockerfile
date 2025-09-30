@@ -3,35 +3,33 @@
 # 第一阶段：构建前端应用
 FROM node:18-alpine AS builder
 
-# 安装 pnpm
-RUN npm install -g pnpm@8
+# 使用 npm 作为包管理器
 
 WORKDIR /app/client
 
-# 复制前端 package.json 和 pnpm-lock.yaml 并安装依赖
-COPY client/package*.json client/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# 复制前端 package.json 和 package-lock.json 并安装依赖
+COPY client/package*.json client/package-lock.json ./
+RUN npm ci
 
 # 复制前端源代码
 COPY client/ .
 
 # 构建前端应用
-RUN pnpm run build
+RUN npm run build
 
 # 第二阶段：构建最终镜像
 FROM node:18-alpine AS production
 
-# 安装 pnpm
-RUN npm install -g pnpm@8
+# 使用 npm 作为包管理器
 
 WORKDIR /app
 
 # 安装系统依赖
 RUN apk add --no-cache curl
 
-# 复制后端 package.json 和 pnpm-lock.yaml 并安装生产依赖
-COPY server/package*.json server/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod && pnpm store prune
+# 复制后端 package.json 和 package-lock.json 并安装生产依赖
+COPY server/package*.json server/package-lock.json ./
+RUN npm ci --only=production
 
 # 复制后端源代码
 COPY server/ .

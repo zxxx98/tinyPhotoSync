@@ -1,21 +1,20 @@
 # 开发环境 Dockerfile
 FROM node:18-alpine
 
-# 安装 pnpm
-RUN npm install -g pnpm@8
+# 使用 npm 作为包管理器
 
 WORKDIR /app
 
 # 安装系统依赖
 RUN apk add --no-cache curl
 
-# 复制 package.json 和 pnpm-lock.yaml 文件
-COPY server/package*.json server/pnpm-lock.yaml ./
-COPY client/package*.json client/pnpm-lock.yaml ./client/
+# 复制 package.json 和 package-lock.json 文件
+COPY server/package*.json server/package-lock.json ./
+COPY client/package*.json client/package-lock.json ./client/
 
 # 安装依赖
-RUN pnpm install
-RUN cd client && pnpm install
+RUN npm install
+RUN cd client && npm install
 
 # 复制源代码
 COPY server/ ./server/
@@ -28,4 +27,4 @@ RUN mkdir -p storage data
 EXPOSE 3000 3001
 
 # 启动命令
-CMD ["pnpm", "run", "dev"]
+CMD ["npm", "run", "dev"]

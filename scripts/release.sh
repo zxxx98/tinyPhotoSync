@@ -120,9 +120,9 @@ if [[ "$DRY_RUN" == "true" ]]; then
   echo "  [DRY RUN] 将更新 client/package.json 版本为 $VERSION"
   echo "  [DRY RUN] 将更新 server/package.json 版本为 $VERSION"
 else
-  pnpm version "$VERSION" --no-git-tag-version
-  cd client && pnpm version "$VERSION" --no-git-tag-version && cd ..
-  cd server && pnpm version "$VERSION" --no-git-tag-version && cd ..
+  npm version "$VERSION" --no-git-tag-version
+  cd client && npm version "$VERSION" --no-git-tag-version && cd ..
+  cd server && npm version "$VERSION" --no-git-tag-version && cd ..
 fi
 
 # 更新 CHANGELOG.md

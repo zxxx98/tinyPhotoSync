@@ -1,6 +1,6 @@
 {
   "name": "photosync-server",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "PhotoSync 后端服务器",
   "main": "src/server.js",
   "scripts": {

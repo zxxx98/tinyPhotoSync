@@ -4,7 +4,7 @@
 FROM node:18-alpine AS builder
 
 # 安装 pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8
 
 WORKDIR /app/client
 
@@ -22,7 +22,7 @@ RUN pnpm run build
 FROM node:18-alpine AS production
 
 # 安装 pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8
 
 WORKDIR /app
 

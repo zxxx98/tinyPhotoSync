@@ -1,0 +1,65 @@
+name: Test pnpm Installation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-pnpm:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Verify pnpm installation
+        run: |
+          echo "pnpm version:"
+          pnpm --version
+          echo "pnpm location:"
+          which pnpm
+          echo "Node.js version:"
+          node --version
+          echo "npm version:"
+          npm --version
+
+      - name: Test pnpm commands
+        run: |
+          echo "Testing pnpm install..."
+          pnpm install --frozen-lockfile
+          echo "Testing pnpm run..."
+          pnpm run --help
+          echo "pnpm test completed successfully!"
+
+      - name: Test client dependencies
+        run: |
+          cd client
+          echo "Installing client dependencies..."
+          pnpm install --frozen-lockfile
+          echo "Client dependencies installed successfully!"
+
+      - name: Test server dependencies
+        run: |
+          cd server
+          echo "Installing server dependencies..."
+          pnpm install --frozen-lockfile
+          echo "Server dependencies installed successfully!"
+
+      - name: Test build process
+        run: |
+          echo "Testing build process..."
+          cd client
+          pnpm run build
+          echo "Build completed successfully!"

@@ -35,7 +35,7 @@ RUN npm install --only=production
 COPY server/ .
 
 # 从第一阶段复制构建好的前端静态文件
-COPY --from=builder /app/client/dist ./public
+COPY --from=builder /app/client/build ./public
 
 # 创建必要的目录
 RUN mkdir -p storage data

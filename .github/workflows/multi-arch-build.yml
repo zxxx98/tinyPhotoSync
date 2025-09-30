@@ -17,7 +17,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/tinyphotosync }}
+  IMAGE_NAME: ${{ github.repository_owner }}/tinyphotosync
 
 jobs:
   build:
@@ -76,7 +76,7 @@ jobs:
             org.opencontainers.image.title=PhotoSync
             org.opencontainers.image.description=自托管的照片同步应用
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
-            org.opencontainers.image.created=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}

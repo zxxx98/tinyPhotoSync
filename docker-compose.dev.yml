@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  photosync-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: photosync-dev
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./server:/app/server
+      - ./client:/app/client
+      - ./photo-storage:/app/storage
+      - ./server/data:/app/data
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - CLIENT_PORT=3001
+    restart: unless-stopped
+    command: npm run dev

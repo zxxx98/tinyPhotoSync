@@ -1,0 +1,190 @@
+name: Multi-Architecture Docker Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '版本标签 (例如: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      platforms:
+        description: '目标平台 (例如: linux/amd64,linux/arm64)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ github.event.inputs.platforms || 'linux/amd64,linux/arm64' }}
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ github.event.inputs.platforms || 'linux/amd64,linux/arm64' }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.title=PhotoSync
+            org.opencontainers.image.description=自托管的照片同步应用
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.created=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ steps.version.outputs.version }}
+          path: sbom.spdx.json
+
+      - name: Create Release with Assets
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: PhotoSync ${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 PhotoSync ${{ steps.version.outputs.version }}
+            
+            ### 📦 Docker 镜像
+            ```bash
+            # 拉取最新版本
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            
+            # 或者拉取最新标签
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ```
+            
+            ### 🐳 运行容器
+            ```bash
+            # 基本运行
+            docker run -d \
+              --name photosync \
+              -p 8080:3000 \
+              -v photosync-storage:/app/storage \
+              -v photosync-data:/app/data \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ```
+            
+            ### 🐙 Docker Compose
+            ```yaml
+            version: '3.8'
+            services:
+              photosync:
+                image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+                container_name: photosync-app
+                ports:
+                  - "8080:3000"
+                volumes:
+                  - photosync-storage:/app/storage
+                  - photosync-data:/app/data
+                environment:
+                  - NODE_ENV=production
+                restart: unless-stopped
+            
+            volumes:
+              photosync-storage:
+              photosync-data:
+            ```
+            
+            ### 📋 变更日志
+            - 查看 [提交历史](https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}) 了解详细变更
+            
+            ### 🔍 安全信息
+            - SBOM (软件物料清单) 已生成并包含在此发布中
+            - 支持多架构: linux/amd64, linux/arm64
+          files: |
+            sbom.spdx.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update package versions
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          # 更新所有 package.json 文件中的版本
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # 更新根目录 package.json
+          npm version $VERSION --no-git-tag-version
+          
+          # 更新客户端 package.json
+          cd client
+          npm version $VERSION --no-git-tag-version
+          
+          # 更新服务端 package.json
+          cd ../server
+          npm version $VERSION --no-git-tag-version
+          
+          # 提交版本更新
+          cd ..
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json client/package.json server/package.json
+          git commit -m "chore: bump version to $VERSION [skip ci]"
+          git push
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "🎉 多架构 Docker 镜像构建成功！"
+          echo "📦 镜像: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo "🏗️  支持架构: ${{ github.event.inputs.platforms || 'linux/amd64,linux/arm64' }}"
+          echo "📋 SBOM: 已生成并上传到发布页面"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Docker 镜像构建失败"
+          echo "请检查构建日志以获取更多信息"

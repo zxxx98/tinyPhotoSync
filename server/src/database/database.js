@@ -2,7 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs-extra');
 
-const DB_PATH = path.join(__dirname, '../../data/photos.db');
+// 使用绝对路径，确保在Docker容器中正确
+const DB_PATH = path.join('/app', 'data', 'photos.db');
 
 let db = null;
 
@@ -10,17 +11,24 @@ let db = null;
 async function initializeDatabase() {
   try {
     // 确保数据目录存在
-    await fs.ensureDir(path.dirname(DB_PATH));
+    const dataDir = path.dirname(DB_PATH);
+    await fs.ensureDir(dataDir);
+    
+    // 设置目录权限
+    await fs.chmod(dataDir, 0o755);
     
     return new Promise((resolve, reject) => {
       db = new sqlite3.Database(DB_PATH, (err) => {
         if (err) {
           console.error('数据库连接失败:', err);
+          console.error('数据库路径:', DB_PATH);
+          console.error('数据目录权限:', dataDir);
           reject(err);
           return;
         }
         
         console.log('📊 SQLite 数据库连接成功');
+        console.log('📁 数据库路径:', DB_PATH);
         
         // 创建照片表
         db.serialize(() => {

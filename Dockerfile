@@ -9,7 +9,7 @@ WORKDIR /app/client
 
 # 复制前端 package.json 和 package-lock.json 并安装依赖
 COPY client/package*.json client/package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # 复制前端源代码
 COPY client/ .
@@ -29,7 +29,7 @@ RUN apk add --no-cache curl
 
 # 复制后端 package.json 和 package-lock.json 并安装生产依赖
 COPY server/package*.json server/package-lock.json ./
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # 复制后端源代码
 COPY server/ .

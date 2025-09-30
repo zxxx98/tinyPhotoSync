@@ -37,21 +37,25 @@ jobs:
         run: |
           # 客户端代码检查
           cd client
-          npm run lint || echo "Linting not configured"
+          echo "🔍 开始客户端代码检查..."
+          npm run lint 2>&1 || echo "⚠️ 客户端代码检查未配置或失败"
           
           # 服务端代码检查
           cd ../server
-          npm run lint || echo "Linting not configured"
+          echo "🔍 开始服务端代码检查..."
+          npm run lint 2>&1 || echo "⚠️ 服务端代码检查未配置或失败"
 
       - name: Run tests
         run: |
           # 客户端测试
           cd client
-          npm test -- --coverage --watchAll=false || echo "Tests not configured"
+          echo "🧪 开始客户端测试..."
+          npm test -- --coverage --watchAll=false 2>&1 || echo "⚠️ 客户端测试未配置或失败"
           
           # 服务端测试
           cd ../server
-          npm test -- --coverage || echo "Tests not configured"
+          echo "🧪 开始服务端测试..."
+          npm test -- --coverage 2>&1 || echo "⚠️ 服务端测试未配置或失败"
 
       - name: Build client
         run: |

@@ -19,8 +19,9 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -86,12 +87,12 @@ jobs:
 
       - name: Create Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: PhotoSync ${{ steps.version.outputs.version }}
+          name: PhotoSync ${{ steps.version.outputs.version }}
           body: |
             ## PhotoSync ${{ steps.version.outputs.version }}
             
